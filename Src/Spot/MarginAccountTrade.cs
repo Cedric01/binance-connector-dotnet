@@ -6,7 +6,7 @@ namespace Binance.Spot
     using System.Threading.Tasks;
     using Binance.Spot.Models;
 
-    public class MarginAccountTrade : SpotService
+    public class MarginAccountTrade : SpotService, IMarginAccountTrade
     {
         public MarginAccountTrade(string baseUrl = DEFAULT_SPOT_BASE_URL, string apiKey = null, string apiSecret = null)
         : this(new HttpClient(), baseUrl: baseUrl, apiKey: apiKey, apiSecret: apiSecret)

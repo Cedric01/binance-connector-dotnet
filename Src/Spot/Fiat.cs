@@ -6,7 +6,7 @@ namespace Binance.Spot
     using System.Threading.Tasks;
     using Binance.Spot.Models;
 
-    public class Fiat : SpotService
+    public class Fiat : SpotService, IFiat
     {
         public Fiat(string baseUrl = DEFAULT_SPOT_BASE_URL, string apiKey = null, string apiSecret = null)
         : this(new HttpClient(), baseUrl: baseUrl, apiKey: apiKey, apiSecret: apiSecret)

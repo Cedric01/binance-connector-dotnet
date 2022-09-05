@@ -1,0 +1,21 @@
+{
+  "Version": 1,
+  "ProjectMap": {
+    "03c729c3-3371-4d8d-a41d-d1b0fb1526f1": {
+      "ProjectGuid": "03c729c3-3371-4d8d-a41d-d1b0fb1526f1",
+      "DisplayName": "Spot",
+      "ColorIndex": 0
+    },
+    "5e02d9e7-dee6-4797-98f8-f562a891a38b": {
+      "ProjectGuid": "5e02d9e7-dee6-4797-98f8-f562a891a38b",
+      "DisplayName": "Common.Tests",
+      "ColorIndex": 1
+    },
+    "d8336cee-e1ce-4829-98ba-b9898422e626": {
+      "ProjectGuid": "d8336cee-e1ce-4829-98ba-b9898422e626",
+      "DisplayName": "Common",
+      "ColorIndex": 2
+    }
+  },
+  "NextColorIndex": 3
+}
