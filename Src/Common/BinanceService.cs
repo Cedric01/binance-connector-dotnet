@@ -1,7 +1,9 @@
-﻿namespace Binance.Common
+namespace Binance.Common
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
+    using System.Linq;
     using System.Net.Http;
     using System.Security.Cryptography;
     using System.Text;
@@ -57,6 +59,7 @@
             {
                 queryStringBuilder.Append("&");
             }
+
             queryStringBuilder.Append("signature=").Append(signature);
 
             requestUri += "?" + queryStringBuilder.ToString();
@@ -81,7 +84,8 @@
         {
             foreach (KeyValuePair<string, object> queryParameter in queryParameters)
             {
-                if (!string.IsNullOrWhiteSpace(queryParameter.Value?.ToString()))
+                string queryParameterValue = Convert.ToString(queryParameter.Value, CultureInfo.InvariantCulture);
+                if (!string.IsNullOrWhiteSpace(queryParameterValue))
                 {
                     if (builder.Length > 0)
                     {
@@ -91,7 +95,7 @@
                     builder
                         .Append(queryParameter.Key)
                         .Append("=")
-                        .Append(HttpUtility.UrlEncode(queryParameter.Value.ToString()));
+                        .Append(HttpUtility.UrlEncode(queryParameterValue));
                 }
             }
 
@@ -134,7 +138,12 @@
                             }
                             catch (JsonReaderException ex)
                             {
-                                throw new BinanceClientException($"Failed to map server response from '${requestUri}' to given type", -1, ex);
+                                var clientException = new BinanceClientException($"Failed to map server response from '${requestUri}' to given type", -1, ex);
+
+                                clientException.StatusCode = (int)response.StatusCode;
+                                clientException.Headers = response.Headers.ToDictionary(a => a.Key, a => a.Value);
+
+                                throw clientException;
                             }
                         }
                     }
@@ -143,23 +152,36 @@
                 {
                     using (HttpContent responseContent = response.Content)
                     {
+                        BinanceHttpException httpException = null;
                         string contentString = await responseContent.ReadAsStringAsync();
-                        if (400 <= ((int)response.StatusCode) && ((int)response.StatusCode) < 500)
+                        int statusCode = (int)response.StatusCode;
+                        if (400 <= statusCode && statusCode < 500)
                         {
-                            try
+                            if (string.IsNullOrWhiteSpace(contentString))
                             {
-                                throw JsonConvert.DeserializeObject<BinanceClientException>(contentString);
-
+                                httpException = new BinanceClientException("Unsuccessful response with no content", -1);
                             }
-                            catch (JsonReaderException ex)
+                            else
                             {
-                                throw new BinanceClientException(contentString, -1, ex);
+                                try
+                                {
+                                    httpException = JsonConvert.DeserializeObject<BinanceClientException>(contentString);
+                                }
+                                catch (JsonReaderException ex)
+                                {
+                                    httpException = new BinanceClientException(contentString, -1, ex);
+                                }
                             }
                         }
                         else
                         {
-                            throw new BinanceServerException(contentString);
+                            httpException = new BinanceServerException(contentString);
                         }
+
+                        httpException.StatusCode = statusCode;
+                        httpException.Headers = response.Headers.ToDictionary(a => a.Key, a => a.Value);
+
+                        throw httpException;
                     }
                 }
             }

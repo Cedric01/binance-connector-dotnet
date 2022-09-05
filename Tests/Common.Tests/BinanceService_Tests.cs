@@ -2,6 +2,8 @@ namespace Binance.Common.Tests
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
+    using System.Linq;
     using System.Net;
     using System.Net.Http;
     using System.Threading;
@@ -120,13 +122,21 @@ namespace Binance.Common.Tests
         public async void SendPublicAsync_Server_Formatted_Unauthorized_Error_Throws_BinanceClientException()
         {
             var mockMessageHandler = new Mock<HttpMessageHandler>();
+
+            var content = "{\"code\":1234,\"msg\":\"Message\"}";
+            var headerKey = "Test-Header";
+            var headerValue = "Test-Value";
+
+            var response = new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.Unauthorized,
+                Content = new StringContent(content),
+            };
+            response.Headers.Add(headerKey, headerValue);
+
             mockMessageHandler.Protected()
                 .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(new HttpResponseMessage
-                {
-                    StatusCode = HttpStatusCode.Unauthorized,
-                    Content = new StringContent("{\"code\":1234,\"msg\":\"Message\"}"),
-                });
+                .ReturnsAsync(response);
             var binanceService = new MockBinanceService(new HttpClient(mockMessageHandler.Object), baseUrl: "https://www.binance.com");
 
             var exception = await Assert.ThrowsAsync<BinanceClientException>(async () =>
@@ -136,6 +146,9 @@ namespace Binance.Common.Tests
 
             Assert.Equal(1234, exception.Code);
             Assert.Equal("Message", exception.Message);
+            Assert.Equal((int)HttpStatusCode.Unauthorized, exception.StatusCode);
+            Assert.True(exception.Headers.ContainsKey(headerKey));
+            Assert.Equal(headerValue, exception.Headers[headerKey].First());
         }
 
         [Fact]
@@ -163,6 +176,31 @@ namespace Binance.Common.Tests
                     It.IsAny<Exception>(),
                     (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
                 Times.AtLeast(2));
+        }
+
+        [Fact]
+        public async void SendPublicAsync_Culture_Invariant()
+        {
+            var mockMessageHandler = new Mock<HttpMessageHandler>();
+            var mockLogger = new Mock<ILogger>();
+
+            Thread.CurrentThread.CurrentCulture = CultureInfo.CreateSpecificCulture("de-DE");
+
+            mockMessageHandler.Protected()
+                .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.Is<HttpRequestMessage>(rm => rm.RequestUri.Query.Contains("decimal=0.45")), ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(new HttpResponseMessage
+                {
+                    StatusCode = HttpStatusCode.OK,
+                });
+            var binanceService = new MockBinanceService(new HttpClient(mockMessageHandler.Object), baseUrl: "https://www.binance.com");
+
+            await binanceService.SendPublicAsync<string>(
+                string.Empty,
+                HttpMethod.Get,
+                query: new Dictionary<string, object>
+                {
+                    { "decimal", 0.45M },
+                });
         }
         #endregion
 
@@ -274,12 +312,12 @@ namespace Binance.Common.Tests
         {
             var mockMessageHandler = new Mock<HttpMessageHandler>();
             mockMessageHandler.Protected()
-                .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.Is<HttpRequestMessage>(rm => rm.RequestUri.Query.Contains("signature=c8db56825ae71d6d79447849e617115f4a920fa2acdcab2b053c4b2838bd6b71")), ItExpr.IsAny<CancellationToken>())
+                .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.Is<HttpRequestMessage>(rm => rm.RequestUri.Query.Contains("signature=dd3bf7fbce9c8dce2cf94b63f2f4973e62c938597734a4e08390a69ad513097e")), ItExpr.IsAny<CancellationToken>())
                 .ReturnsAsync(new HttpResponseMessage
                 {
                     StatusCode = HttpStatusCode.OK,
                 });
-            var binanceService = new MockBinanceService(new HttpClient(mockMessageHandler.Object), baseUrl: "https://www.binance.com", apiKey: "vmPUZE6mv9SD5VNHk4HlWFsOr6aKE2zvsw0MuIgwCIPy6utIco14y7Ju91duEh8A", apiSecret: "NhqPtmdSJYdKjVHjA7PZj4Mge3R5YNiP1e3UZjInClVN65XAbvqqM6A7H5fATj0j");
+            var binanceService = new MockBinanceService(new HttpClient(mockMessageHandler.Object), baseUrl: "https://www.binance.com", apiKey: "api-key", apiSecret: "api-secret");
 
             await binanceService.SendSignedAsync<string>(
                 string.Empty,
@@ -400,13 +438,21 @@ namespace Binance.Common.Tests
         public async void SendSignedAsync_Server_Unformatted_Unauthorized_Error_Throws_BinanceClientException()
         {
             var mockMessageHandler = new Mock<HttpMessageHandler>();
+
+            var content = "hello";
+            var headerKey = "Test-Header";
+            var headerValue = "Test-Value";
+
+            var response = new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.Unauthorized,
+                Content = new StringContent(content),
+            };
+            response.Headers.Add(headerKey, headerValue);
+
             mockMessageHandler.Protected()
                 .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(new HttpResponseMessage
-                {
-                    StatusCode = HttpStatusCode.Unauthorized,
-                    Content = new StringContent("hello"),
-                });
+                .ReturnsAsync(response);
             var binanceService = new MockBinanceService(new HttpClient(mockMessageHandler.Object), baseUrl: "https://www.binance.com", apiKey: null, apiSecret: "apiSecret");
 
             var exception = await Assert.ThrowsAsync<BinanceClientException>(async () =>
@@ -415,20 +461,31 @@ namespace Binance.Common.Tests
             });
 
             Assert.Equal(-1, exception.Code);
-            Assert.Equal("hello", exception.Message);
+            Assert.Equal(content, exception.Message);
+            Assert.Equal((int)HttpStatusCode.Unauthorized, exception.StatusCode);
+            Assert.True(exception.Headers.ContainsKey(headerKey));
+            Assert.Equal(headerValue, exception.Headers[headerKey].First());
         }
 
         [Fact]
         public async void SendSignedAsync_Server_Formatted_Unauthorized_Error_Throws_BinanceClientException()
         {
             var mockMessageHandler = new Mock<HttpMessageHandler>();
+
+            var content = "{\"code\":1234,\"msg\":\"Message\"}";
+            var headerKey = "Test-Header";
+            var headerValue = "Test-Value";
+
+            var response = new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.Unauthorized,
+                Content = new StringContent(content),
+            };
+            response.Headers.Add(headerKey, headerValue);
+
             mockMessageHandler.Protected()
                 .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-                .ReturnsAsync(new HttpResponseMessage
-                {
-                    StatusCode = HttpStatusCode.Unauthorized,
-                    Content = new StringContent("{\"code\":1234,\"msg\":\"Message\"}"),
-                });
+                .ReturnsAsync(response);
             var binanceService = new MockBinanceService(new HttpClient(mockMessageHandler.Object), baseUrl: "https://www.binance.com", apiKey: null, apiSecret: "apiSecret");
 
             var exception = await Assert.ThrowsAsync<BinanceClientException>(async () =>
@@ -438,6 +495,9 @@ namespace Binance.Common.Tests
 
             Assert.Equal(1234, exception.Code);
             Assert.Equal("Message", exception.Message);
+            Assert.Equal((int)HttpStatusCode.Unauthorized, exception.StatusCode);
+            Assert.True(exception.Headers.ContainsKey(headerKey));
+            Assert.Equal(headerValue, exception.Headers[headerKey].First());
         }
 
         [Fact]
@@ -484,6 +544,31 @@ namespace Binance.Common.Tests
                     It.IsAny<Exception>(),
                     (Func<It.IsAnyType, Exception, string>)It.IsAny<object>()),
                 Times.AtLeast(2));
+        }
+
+        [Fact]
+        public async void SendSignedAsync_Culture_Invariant()
+        {
+            var mockMessageHandler = new Mock<HttpMessageHandler>();
+            var mockLogger = new Mock<ILogger>();
+
+            Thread.CurrentThread.CurrentCulture = CultureInfo.CreateSpecificCulture("de-DE");
+
+            mockMessageHandler.Protected()
+                .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.Is<HttpRequestMessage>(rm => rm.RequestUri.Query.Contains("decimal=0.45")), ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(new HttpResponseMessage
+                {
+                    StatusCode = HttpStatusCode.OK,
+                });
+            var binanceService = new MockBinanceService(new HttpClient(mockMessageHandler.Object), baseUrl: "https://www.binance.com", apiKey: null, apiSecret: "apiSecret");
+
+            await binanceService.SendSignedAsync<string>(
+                string.Empty,
+                HttpMethod.Get,
+                query: new Dictionary<string, object>
+                {
+                    { "decimal", 0.45M },
+                });
         }
         #endregion
     }

@@ -13,13 +13,12 @@ namespace Binance.Spot.Models
         public static WithdrawStatus REJECTED { get => new WithdrawStatus("REJECTED"); }
         public static WithdrawStatus PROCESSING { get => new WithdrawStatus("PROCESSING"); }
         public static WithdrawStatus FAILURE { get => new WithdrawStatus("FAILURE"); }
-        public static WithdrawStatus COMPLETED
-        {
-            get => new WithdrawStatus("COMPLETED");
-        }
+        public static WithdrawStatus COMPLETED { get => new WithdrawStatus("COMPLETED"); }
 
         public string Value { get; private set; }
 
         public static implicit operator string(WithdrawStatus enm) => enm.Value;
+
+        public override string ToString() => this.Value.ToString();
     }
 }

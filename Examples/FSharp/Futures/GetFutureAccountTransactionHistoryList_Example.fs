@@ -16,9 +16,12 @@ let main argv =
 
     let loggingHandler = new BinanceLoggingHandler(logger)
     let httpClient = new HttpClient(loggingHandler)
+
+    let apiKey = "api-key";
+    let apiSecret = "api-secret";
     
-    let futures = new Futures(httpClient)
+    let futures = new Futures(httpClient, apiKey = apiKey, apiSecret = apiSecret)
     
-    let result = futures.GetFutureAccountTransactionHistoryList("USDT", 1631318399000) |> Async.AwaitTask |> Async.RunSynchronously
+    let result = futures.GetFutureAccountTransactionHistoryList("USDT", 1631318399000L) |> Async.AwaitTask |> Async.RunSynchronously
     
     0

@@ -1,5 +1,6 @@
 # Binance Public API Connector DotNET
 
+[![[Nuget]](https://img.shields.io/nuget/v/Binance.Spot)](https://www.nuget.org/packages/Binance.Spot)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 This is a lightweight library that works as a connector to [Binance public API](https://github.com/binance/binance-spot-api-docs)
@@ -146,13 +147,17 @@ Wallet wallet = new Wallet(httpClient: httpClient);
 ### Exceptions
 
 There are 2 types of exceptions returned from the library:
-- `Binance.Common.BinanceClientExceptions`
+- `Binance.Common.BinanceClientException`
     - This is thrown when server returns `4XX`, it's an issue from client side.
-    - It has 2 properties:
-        - `code` - Server's error code, e.g. `-1102`
-        - `message` - Server's error message, e.g. `Unknown order sent.`
-- `Binance.Common.BinanceServerExceptions`
+    - Properties:
+        - `Code` - Server's error code, e.g. `-1102`
+        - `Message` - Server's error message, e.g. `Unknown order sent.`
+- `Binance.Common.BinanceServerException`
     - This is thrown when server returns `5XX`, it's an issue from server side.
+
+Both exceptions inherit `Binance.Common.BinanceHttpException` along with the following properties:
+- `StatusCode` - Response http status code, e.g. `401`
+- `Headers` -  Dictionary with response headers
 
 ### Logging
 This library implements the .NET logging API that works with a variety of built-in and third-party logging providers. 

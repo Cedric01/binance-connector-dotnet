@@ -16,8 +16,11 @@ let main argv =
 
     let loggingHandler = new BinanceLoggingHandler(logger)
     let httpClient = new HttpClient(loggingHandler)
+
+    let apiKey = "api-key";
+    let apiSecret = "api-secret";
     
-    let savings = new Savings(httpClient)
+    let savings = new Savings(httpClient, apiKey = apiKey, apiSecret = apiSecret)
     
     let result = savings.GetInterestHistory(LendingType.DAILY) |> Async.AwaitTask |> Async.RunSynchronously
     

@@ -1,6 +1,5 @@
 namespace Binance.Spot.Tests
 {
-    using System;
     using System.Net;
     using System.Net.Http;
     using Binance.Spot.Models;
@@ -10,8 +9,8 @@ namespace Binance.Spot.Tests
 
     public class Fiat_Tests
     {
-        private string apiKey = "vmPUZE6mv9SD5VNHk4HlWFsOr6aKE2zvsw0MuIgwCIPy6utIco14y7Ju91duEh8A";
-        private string apiSecret = "NhqPtmdSJYdKjVHjA7PZj4Mge3R5YNiP1e3UZjInClVN65XAbvqqM6A7H5fATj0j";
+        private string apiKey = "api-key";
+        private string apiSecret = "api-secret";
 
         #region GetFiatDepositWithdrawHistory
         [Fact]
@@ -41,7 +40,7 @@ namespace Binance.Spot.Tests
         [Fact]
         public async void GetFiatPaymentsHistory_Response()
         {
-            var responseContent = "{\"code\":\"000000\",\"message\":\"success\",\"data\":[{\"orderNo\":\"353fca443f06466db0c4dc89f94f027a\",\"sourceAmount\":\"20.0\",\"fiatCurrency\":\"EUR\",\"obtainAmount\":\"4.462\",\"cryptoCurrency\":\"LUNA\",\"totalFee\":\"0.2\",\"price\":\"4.437472\",\"status\":\"Failed\",\"createTime\":1624529919000,\"updateTime\":1624529919000}],\"total\":1,\"success\":true}";
+            var responseContent = "{\"code\":\"000000\",\"message\":\"success\",\"data\":[{\"orderNo\":\"353fca443f06466db0c4dc89f94f027a\",\"sourceAmount\":\"20.00\",\"fiatCurrency\":\"EUR\",\"obtainAmount\":\"4.462\",\"cryptoCurrency\":\"LUNA\",\"totalFee\":\"0.2\",\"price\":\"4.437472\",\"status\":\"Failed\",\"createTime\":1624529919000,\"updateTime\":1624529919000}],\"total\":1,\"success\":true}";
             var mockMessageHandler = new Mock<HttpMessageHandler>();
             mockMessageHandler.Protected()
                 .SetupSendAsync("/sapi/v1/fiat/payments", HttpMethod.Get)
